@@ -1,4 +1,17 @@
+## Miembros Grupo:
+
+Garcia Maiztegui Agustin
+Rojas	Curulla Martin César
+Rosso	Luis
+Rojas	Luana
+Tomas	Schulteis 
+Tomas Arrigo
+
 # Sistema de Autenticación Seguro
+
+# Mockup
+
+https://xd.adobe.com/view/788666e5-3f93-42b3-91e1-e9249a475fc0-2dd5/grid
 
 ## Descripción
 Este proyecto es una simulación de un sistema de autenticación de usuarios (login) con roles de usuario y administrador, incluyendo funciones de registro, login, y recuperación de contraseñas. Se ha desarrollado bajo las mejores prácticas de seguridad DevSecOps.
