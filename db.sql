@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS login_system;
-USE login_system;
+CREATE DATABASE IF NOT EXISTS login_system2;
+USE login_system2;
 
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -22,6 +22,11 @@ CREATE TABLE access_logs (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- usuario de tipo admin para test. La contraseña es: Mano+1986
+-- usuario de tipo admin para test. La contraseña es: "Mano+1986"
 INSERT INTO users (dni, nombre, apellido, fecha_nacimiento, email, password, role) 
 VALUES ('14276579', 'Diego', 'Maradona', '1960-10-30', 'maradona@dios.com', '$2y$10$jr3x7NnWFvtTj63Hah5WDO96gtnziX5mPPlipeaNOMkxVbVPQFc0m', 'admin');
+-- usuario de tipo user para test. La contraseña es: "pepeApe88."
+INSERT INTO users (dni, nombre, apellido, fecha_nacimiento, email, password, role)
+VALUES ('123', 'pepe', 'pepeApe', '0002-02-02', 'pepeApe@pepeApe88punto.local', '$2y$10$eGLyznEU1oUWsQxL3SMXne3jfYXKVKH8dO1Bz.L9FgLXAwjXdFH/6', 'user');
+
+grant select, insert, update, delete on login_system2.* to 'login_escritor'@'%' identified by 'writeAccess';

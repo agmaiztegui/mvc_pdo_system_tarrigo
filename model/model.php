@@ -4,9 +4,9 @@ class Model {
 
     public function __construct() {
         $host = '127.0.0.1';
-        $db = 'login_system';
-        $user = 'root';
-        $pass = 'root';
+        $db = 'login_system2';
+        $user = 'login_escritor';
+        $pass = 'writeAccess';
         $charset = 'utf8mb4';
 
         $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -45,6 +45,8 @@ class Model {
     }
 
     public function login($dniOrEmail, $password) {
+        $dniOrEmail = rtrim($dniOrEmail);
+
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE dni = ? OR email = ?");
         $stmt->execute([$dniOrEmail, $dniOrEmail]);
         $user = $stmt->fetch();
@@ -79,17 +81,34 @@ class Model {
     public function logAccess($userId) {
         $stmt = $this->pdo->prepare("INSERT INTO access_logs (user_id, access_time) VALUES (?, NOW())");
         $stmt->execute([$userId]);
+
+        $errores = $stmt->errorInfo();
+        if( !empty($errores) ){
+            echo '</br>Codigo de error PDO:'.implode(":",$this->pdo->errorInfo());
+        }
+
     }
     
     public function incrementFailedLogins($dniOrEmail) {
-        $stmt = $this->pdo->prepare("UPDATE users SET intentosfallidos = intentosfallidos + 1 WHERE dni = ? OR email = ?");
+        $stmt = $this->pdo->prepare("UPDATE users SET intentosfallidos = intentosfallidos + 1 WHERE (dni = ? OR email = ?)");
         $stmt->execute([$dniOrEmail, $dniOrEmail]);
+
+        $errores = $stmt->errorInfo();
+        if( !empty($errores) ){
+            // echo '</br>Codigo de error PDO:'.implode(":",$this->pdo->errorInfo());
+        }
     }
     
     public function getFailedLogins($dniOrEmail) {
         $stmt = $this->pdo->prepare("SELECT intentosfallidos FROM users WHERE dni = ? OR email = ?");
         $stmt->execute([$dniOrEmail, $dniOrEmail]);
         $user = $stmt->fetch();
+
+        if($user === FALSE){
+            // No encontré nada.
+        } else {
+            return $user['intentosfallidos'];
+        }
         return $user['intentosfallidos'];
     }
     
@@ -99,11 +118,52 @@ class Model {
     }
 
     public function buscar_logs($email) {
-      $stmt = $this->pdo->prepare("SELECT * FROM logs WHERE email = ?");
+      $stmt = $this->pdo->prepare("select access_logs.*, users.email as email from access_logs join users on (users.id = access_logs.user_id) where users.email = ?");
       $stmt->execute([$email]);
       $logs = $stmt->fetchAll();
-      var_dump($logs);
+      // var_dump($logs);
       return $logs;
+    }
+
+    public function getUsers(){
+        $stmt = $this->pdo->prepare("SELECT id, dni, nombre, apellido, fecha_nacimiento, email, role, locked, intentosfallidos FROM users");
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+        return $result;
+    }
+
+    public function deleteUser($userID_a_eliminar){
+        $stmt = $this->pdo->prepare("DELETE users WHERE id = ?");
+        try{
+            $stmt->execute([$userID_a_eliminar]);
+            return 0;
+        } catch (Exception $e) {
+            echo $e;
+            return -1;
+        }
+    }
+
+    public function unlockUser($userID_a_desbloquear){
+        $stmt = $this->pdo->prepare("UPDATE users SET locked = 0 WHERE id = ?");
+        try {
+            $stmt->execute([$userID_a_desbloquear]);
+            $this->restartFailedLogins($userID_a_desbloquear);
+            return 0;
+        } catch (Exception $e) {
+            echo $e;
+            return -1;
+        }
+    }
+
+
+    public function restartFailedLogins($idDelUsuario) {
+        $stmt = $this->pdo->prepare("UPDATE users SET intentosfallidos = 0 WHERE id = ?");
+        $stmt->execute([$idDelUsuario]);
+
+        $errores = $stmt->errorInfo();
+        if( !empty($errores) ){
+            // echo '</br>Codigo de error PDO:'.implode(":",$this->pdo->errorInfo());
+        }
     }
 }
 ?>
