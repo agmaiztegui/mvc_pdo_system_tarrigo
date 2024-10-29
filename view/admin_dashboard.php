@@ -1,21 +1,16 @@
 <?php
+require '../model/model.php';
+
+$unModel = new Model();
+
 session_start();
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
   header('Location: index.php?action=login');
   exit();
 }
 
-$servername = "localhost";
-$username = "root";
-$password = "root";
-$dbname = "login_system";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-  die("Conexión fallida: " . $conn->connect_error);
-}
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">
@@ -76,23 +71,19 @@ if ($conn->connect_error) {
 
   <?php
 
+
+
   if (isset($_GET['email'])) {
     $email = $_GET['email'];
+    $result = $unModel->buscar_logs($email);
 
-
-    $sql = "SELECT al.id, al.access_time, u.email, al.user_id 
-      FROM access_logs al 
-      INNER JOIN users u ON al.user_id = u.id 
-      WHERE u.email = '$email'";
-    $result = $conn->query($sql);
-
-
-    if ($result->num_rows > 0) {
+    if (sizeof($result) > 0) {
       echo "<h2 class='logs-title'>Logs del usuario $email</h2>";
       echo "<table border='1'>";
       echo "<tr><th>ID</th><th>Email</th><th>User ID</th><th>Fecha de acceso</th><th>Eliminar/Desbloquear</th></tr>";
 
-      while($row = $result->fetch_assoc()) {
+      // while($row = $result->fetch_assoc()) {
+      foreach($result as $row){
         echo "<tr><td>" . $row["id"]. "</td><td>" . $row["email"]. "</td><td>" . $row["user_id"]. "</td><td>" . $row["access_time"]. "</td>";
         echo "<td>
           <form action='admin_dashboard.php' method='post'>
@@ -116,15 +107,12 @@ if ($conn->connect_error) {
       echo "<p class='no-logs'>No se encontraron logs para el usuario $email</p>";
     }
   } else {
-
-  $sql = "SELECT * FROM users";
-  $result = $conn->query($sql);
-
-  if ($result->num_rows > 0) {
+  $result = $unModel->getUsers();
+  if (sizeof($result) > 0) {
     echo "<table border='1'>";
     echo "<tr><th>ID</th><th>DNI</th><th>Nombre</th><th>Apellido</th><th>Fecha de nacimiento</th><th>Email</th><th>Rol</th><th>Bloqueado</th><th>Intentos fallidos</th><th>Eliminar/Desbloquear</th></tr>";
 
-    while($row = $result->fetch_assoc()) {
+    foreach($result as $row){
       echo "<tr><td>" . $row["id"]. "</td><td>" . $row["dni"]. "</td><td>" . $row["nombre"]. "</td><td>" . $row["apellido"]. "</td><td>" . $row["fecha_nacimiento"]. "</td><td>" . $row["email"]. "</td><td>" . $row["role"]. "</td><td>" . $row["locked"]. "</td><td>" . $row["intentosfallidos"]. "</td>";
       echo "<td>
         <form action='admin_dashboard.php' method='post'>
@@ -142,37 +130,37 @@ if ($conn->connect_error) {
       </td>";
       echo "</tr>";
     }
-
     echo "</table>";
   } else {
     echo "<p class='no-logs'>No se encontraron usuarios</p>";
   }
 }
 
-if (isset($_POST['delete_user'])) {
-  $user_id = $_POST['delete_user_id'];
-  $sql = "DELETE FROM users WHERE id = '$user_id'";
-  if ($conn->query($sql) === TRUE) {
+if (isset($_POST['delete_user_id'])) {
+  $delete_user_id = $_POST['delete_user_id'];
+  $retorno = $unModel->deleteUser($delete_user_id);
+
+  if ($retorno === 0) {
     echo "Usuario eliminado correctamente";
   } else {
-    echo "Error al eliminar el usuario: " . $conn->error;
+    echo "Error al eliminar el usuario: ";
   }
 }
 
-if (isset($_POST['unlock_user'])) {
-  $user_id = $_POST['unlock_user_id'];
-  $sql = "UPDATE users SET locked = 0 WHERE id = '$user_id'";
-  if ($conn->query($sql) === TRUE) {
+if (isset($_POST['unlock_user_id'])) {
+  echo "</br>Me piden unlockear un user";
+  $unlock_user_id = $_POST['unlock_user_id'];
+  $retorno = $unModel->unlockUser($unlock_user_id);
+
+  if ($retorno === 0) {
     echo "Usuario desbloqueado correctamente";
   } else {
-    echo "Error al desbloquear el usuario: " . $conn->error;
+    echo "Error al desbloquear el usuario: ";
   }
 }
+
+
 ?>
 
 </body>
 </html>
-
-<?php
-$conn->close();
-?>
